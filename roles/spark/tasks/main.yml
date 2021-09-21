@@ -1,0 +1,150 @@
+---
+# tasks file for roles/spark
+- name: Open spark firewall
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+  with_items:
+  - 8080
+  - 8081
+  - 7077
+  - 6066
+  - 4040
+  - 18080
+
+- name: restart firewall
+  service:
+    name: firewalld
+    state: restarted
+
+- name: Create spark group
+  group:
+    name: "{{ spark_group }}"
+    gid: "{{ spark_gid | default(omit) }}"
+  become: true
+
+- name: Create spark user
+  user:
+    name: "{{ spark_user }}"
+    group: "{{ spark_group }}"
+    uid: "{{ spark_uid | default(omit) }}"
+  become: true
+
+- name: Recursively change ownership of a directory
+  file:
+    path: /data/spark
+    state: directory
+    recurse: yes
+    owner: spark
+    group: spark
+    
+- name: check for spark installation
+  become: yes
+  stat:
+    path: '{{spark_target_dir}}'
+  changed_when: false
+  register: spark_binary
+- when: not spark_binary.stat.exists
+  block:
+    - name: download spark...
+      become: yes
+      become_user: root
+      get_url:
+        url: "{{spark_url}}"
+        dest: /tmp/{{spark_tgz}}
+        mode: 0644
+        checksum: "{{spark_checksum}}"
+        timeout: "{{spark_timeout}}"
+    - name: unarchive spark....
+      become: yes
+      become_user: root
+      unarchive:
+        remote_src: yes
+        dest: '{{spark_parent_dir}}'
+        src: /tmp/{{spark_tgz}}
+        creates: '{{spark_target_dir}}'
+  always:
+    - name: cleanup...
+      become: yes
+      become_user: root
+      file:
+        path: /tmp/{{spark_tgz}}
+        state: absent
+        
+- name: link spark...
+  become: yes
+  become_user: root
+  file:
+    src: '{{spark_target_dir}}'
+    dest: '{{spark_link_dir}}'
+    owner: "{{ spark_user }}"
+    group: "{{ spark_group }}"
+    state: link
+    
+- name: include spark in the default path...
+  become: yes
+  become_user: root
+  with_items:
+    - f: spark.sh
+      d: /etc/profile.d
+      m: '0644'
+    - f: spark.env
+      d: '{{spark_target_dir}}'
+      m: '0644'
+  template:
+    src: '{{item.f}}.j2'
+    dest: '{{item.d}}/{{item.f}}'
+    mode: '{{item.m}}'
+
+- name: Recursively change ownership of a directory
+  file:
+    path: /usr/local/spark
+    state: directory
+    recurse: yes
+    owner: spark
+    group: spark   
+
+- name: Copy spark defaults template
+  template:
+    src: templates/spark-defaults.conf.j2
+    dest: "{{ spark_conf_path }}/spark-defaults.conf"
+    
+- name: Copy spark env template
+  template:
+    src: templates/spark-env.sh.j2
+    dest: "{{ spark_conf_path }}/spark-env.sh"
+    
+- name: Copy the spark-master systemd service file
+  template:
+    src: spark-master.service.j2
+    dest: /etc/systemd/system/spark-master.service
+    owner: "{{ spark_user }}"
+    group: "{{ spark_group }}"
+    mode: 0644
+    
+- name: Copy the spark-slave systemd service file
+  template:
+    src: spark-slave.service.j2
+    dest: /etc/systemd/system/spark-slave.service
+    owner: "{{ spark_user }}"
+    group: "{{ spark_group }}"
+    mode: 0644
+    
+- name: Daemon-reload
+  shell: systemctl daemon-reload
+
+- name: Start spark-master
+  service:
+    name: spark-master
+    enabled: yes
+    state: started
+  when: ansible_default_ipv4.address == "{{ spark_master_ip }}"
+
+- name: Start spark-slaves
+  service:
+    name: spark-slave
+    enabled: yes
+    state: started
+  when: ansible_default_ipv4.address != "{{ spark_master_ip }}"
+    

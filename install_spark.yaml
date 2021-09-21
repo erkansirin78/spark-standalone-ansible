@@ -1,0 +1,8 @@
+---
+- hosts: spark_all
+  roles:
+    - name: roles/python3
+- hosts: spark_all 
+  roles:
+    - name: roles/java11
+    - name: roles/spark

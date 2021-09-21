@@ -1,0 +1,21 @@
+---
+# defaults file for roles/spark
+spark_ver: '3.1.1'
+spark_hadoop_ver: hadoop3.2
+spark_binary_download_url: "https://archive.apache.org/dist/spark/spark-3.1.1/spark-{{ spark_ver }}-bin-{{ spark_hadoop_ver }}.tgz"
+
+spark_checksums:
+  '3.1.1':
+    hadoop3.2: sha512:e90b31e58f6d95a42900ba4d288261d71f6c19fa39c1cb71862b792d1b5564941a320227f6ab0e09d946f16b8c1969ed2dea2a369ec8f9d2d7099189234de1be
+
+spark_parent_dir: /opt
+spark_conf_path: '{{ spark_parent_dir }}/spark/conf'
+spark_timeout: 10
+spark_bin_path: '{{ spark_parent_dir }}/spark/bin'
+
+spark_user: spark
+spark_group: spark
+
+spark_master_ip: 192.168.206.25
+SPARK_MASTER_HOST: 192.168.206.25
+SPARK_LOCAL_IP: 192.168.206.25

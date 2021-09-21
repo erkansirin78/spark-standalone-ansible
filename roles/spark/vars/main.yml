@@ -1,0 +1,9 @@
+---
+# vars file for roles/spark
+spark_name: 'spark-{{ spark_ver }}'
+spark_hadoop_name: '{{ spark_name }}-bin-{{ spark_hadoop_ver }}'
+spark_tgz: '{{ spark_hadoop_name }}.tgz'
+spark_url: "https://archive.apache.org/dist/spark/spark-3.1.1/{{ spark_hadoop_name }}.tgz"
+spark_checksum: '{{ spark_checksums[spark_ver][spark_hadoop_ver] }}'
+spark_target_dir: '{{ spark_parent_dir }}/{{ spark_hadoop_name }}'
+spark_link_dir: '{{ spark_parent_dir }}/spark'
