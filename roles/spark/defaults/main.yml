@@ -18,4 +18,4 @@ spark_group: spark
 
 spark_master_ip: 192.168.206.25
 SPARK_MASTER_HOST: 192.168.206.25
-SPARK_LOCAL_IP: 192.168.206.25
+SPARK_LOCAL_IP: '{{ ansible_default_ipv4.address }}'

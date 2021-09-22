@@ -1,0 +1,10 @@
+## spark-slave servisi baþlamýyor
+
+'sparkWorker' could not bind on a random free port.
+
+- Firewall kapatýp tekrar denedim.
+Faydasý olmasý 
+
+- Ansible roles/spark/defaults/main.yml üzerinde SPARK_LOCAL_IP'ye master ip yazmýþým yanlýþlýkla ansible_default_ipv4.address yazýnca düzeldi.
+
+ 
